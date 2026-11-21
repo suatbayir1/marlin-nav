@@ -1,0 +1,1 @@
+# Merkezi loglama mekanizması (log.md yerine sistem logları)

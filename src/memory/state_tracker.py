@@ -1,0 +1,1 @@
+# Obje pozisyonlarındaki değişiklikleri RAG'a kaydeder

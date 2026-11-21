@@ -1,0 +1,1 @@
+# Doğrulanmış aksiyonları AI2-THOR API'sine iletir ve metadata toplar

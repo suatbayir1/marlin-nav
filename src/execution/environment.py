@@ -1,0 +1,1 @@
+# thor_env.py'nin refactor edilmiş hali (Sadece simülasyonu başlatır/kapatır)

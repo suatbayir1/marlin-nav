@@ -1,0 +1,1 @@
+# Çoklu ajan sisteminde görevleri Robot1 ve Robot2'ye paylaştırır[cite: 5]

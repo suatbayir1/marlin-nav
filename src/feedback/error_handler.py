@@ -1,0 +1,1 @@
+# Yürütme/PDDL hatalarını Error Predicates formatına çevirip Planner'a iletir[cite: 5]

@@ -1,0 +1,1 @@
+# Yürütme sonrası SR, SPL, ve RU metriklerini hesaplar[cite: 5]

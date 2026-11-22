@@ -1,5 +1,6 @@
 # Model yolları, API key'ler, AI2-THOR ortam (oda) ayarları
 # Veritabanı yolu, model seçimi ve simülasyon ayarları.
+# config/config.yaml
 project:
   name: "Hybrid-LLM-PDDL-RAG-Planner"
   environment: "AI2-THOR"
@@ -11,13 +12,14 @@ memory:
   top_k: 4
 
 llm:
-  # Seçenekler: "mock" (API/GPU olmadan akış testi), "ollama" (yerel), "openai" (GPT-4o vb.)
-  provider: "mock"
-  model_name: "mistralai/Mistral-7B-Instruct-v0.3"
+  # Seçenekler: "ollama" (yerel), "openai" (GPT-4o vb.), "mock" (API/GPU olmadan test)
+  provider: "ollama"
+  model_name: "mistral"
   base_url: "http://localhost:11434/v1"
   api_key_env: "OPENAI_API_KEY"
   temperature: 0.1
   max_tokens: 512
+  timeout: 120
 
 simulation:
   scene: "FloorPlan1"

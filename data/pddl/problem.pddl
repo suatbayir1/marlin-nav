@@ -20,6 +20,7 @@
         (:goal
             (and
               (at-object apple fridge)
+      (closed fridge)
             )
         )
         )

@@ -1,16 +1,21 @@
 # LLaMA 3/Mistral 7B veya GPT-4o API entegrasyonu
 # RAG'dan gelen bağlamı (ContextBuilder) alıp LLM'e gönderen ve Pythonic DSL planı üreten sınıf.
+# src/planner/llm_agent.py
+
 import os
 import sys
 import yaml
 from pathlib import Path
 from typing import Optional
 from openai import OpenAI
+
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
+
 from src.memory.chromadb_client import VectorDatabaseClient
 from src.memory.context_builder import ContextBuilder
+from src.core.logger import get_logger
 
 class LLMAgent:
     def __init__(
@@ -24,12 +29,13 @@ class LLMAgent:
         """
         config_path = config_path or PROJECT_ROOT / "config/config.yaml"
         prompts_path = prompts_path or PROJECT_ROOT / "config/prompts.yaml"
+        self.logger = get_logger("LLMAgent")
         self.config = self._load_yaml(str(config_path))
         self.prompts = self._load_yaml(str(prompts_path))
 
         llm_cfg = self.config.get("llm", {})
-        self.provider = llm_cfg.get("provider", "mock")
-        self.model_name = llm_cfg.get("model_name", "mistral-7b")
+        self.provider = llm_cfg.get("provider", "ollama")
+        self.model_name = llm_cfg.get("model_name", "mistral")
         self.base_url = llm_cfg.get("base_url", "http://localhost:11434/v1")
         self.api_key_env = llm_cfg.get("api_key_env", "OPENAI_API_KEY")
         self.temperature = llm_cfg.get("temperature", 0.1)
@@ -76,6 +82,9 @@ class LLMAgent:
         """
         system_prompt = self.prompts.get("system_prompt", "")
         user_prompt = self.build_prompt(task_instruction, rag_context, error_feedback)
+        self.logger.info(f"=== [RAG'DAN GELEN BAĞLAM (CONTEXT)] ===\n{rag_context}")
+        self.logger.info(f"=== [LLM SYSTEM PROMPT] ===\n{system_prompt}")
+        self.logger.info(f"=== [LLM USER PROMPT] ===\n{user_prompt}")
 
         if self.provider == "mock":
             return self._mock_inference(task_instruction, error_feedback)
@@ -86,35 +95,35 @@ class LLMAgent:
         raise ValueError(f"Desteklenmeyen LLM sağlayıcısı: {self.provider}")
 
     def _openai_compatible_inference(self, system_prompt: str, user_prompt: str) -> str:
-        """OpenAI API veya yerel Ollama / vLLM sunucuları ile haberleşir."""
-        if OpenAI is None:
-            raise ImportError(
-                "OpenAI paketi bulunamadı. Kurmak için: "
-                "python -m pip install openai"
-            )
-
+        """OpenAI kütüphanesi kullanarak yerel Ollama sunucusuyla (veya OpenAI API ile) haberleşir."""
         api_key = os.getenv(self.api_key_env, "ollama")
         client_kwargs = {"api_key": api_key}
+        
+        # Ollama kullanılıyorsa base_url'i config'ten al, yoksa OpenAI varsayılanında bırak
         if self.provider == "ollama":
             client_kwargs["base_url"] = self.base_url
 
-        client = OpenAI(**client_kwargs)
-        response = client.chat.completions.create(
-            model=self.model_name,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            temperature=self.temperature,
-            max_tokens=self.max_tokens
-        )
-        return self._clean_dsl_output(response.choices[0].message.content)
+        try:
+            client = OpenAI(**client_kwargs)
+            response = client.chat.completions.create(
+                model=self.model_name,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                temperature=self.temperature,
+                max_tokens=self.max_tokens
+            )
+            raw_response = response.choices[0].message.content
+            self.logger.info(f"=== [LLM HAM YANITI (RAW RESPONSE)] ===\n{raw_response}")
+            cleaned_dsl = self._clean_dsl_output(raw_response)
+            self.logger.info(f"=== [LLM TEMİZLENMİŞ DSL ÇIKTISI] ===\n{cleaned_dsl}")
+            return cleaned_dsl
+        except Exception as e:
+            raise ConnectionError(f"Yerel Ollama LLM ile bağlantı kurulamadı. (Model: {self.model_name}). Hata: {e}")
 
     def _mock_inference(self, task_instruction: str, error_feedback: Optional[str]) -> str:
-        """
-        GPU veya API anahtarı olmadan uçtan uca pipeline'ı test etmek için
-        örnek Pythonic DSL çıktısı döndürür.
-        """
+        """GPU olmadan hızlı test yapmak için örnek statik plan döner."""
         if error_feedback and "closed" in error_feedback.lower():
             return (
                 'Robot1.navigate("countertop")\n'
@@ -133,17 +142,19 @@ class LLMAgent:
 
     @staticmethod
     def _clean_dsl_output(raw_text: str) -> str:
-        """LLM çıktısındaki ```python ... ``` bloklarını temizler."""
+        """LLM çıktısındaki gereksiz açıklamaları temizler, sadece DSL komutlarını bırakır."""
         lines = []
         for line in raw_text.strip().splitlines():
             stripped = line.strip()
-            if stripped.startswith("```") or not stripped:
+            if not stripped or stripped.startswith("```") or stripped.startswith("#"):
                 continue
-            lines.append(stripped)
+            # Sadece Robot.action formatında olanları al
+            if stripped.startswith("Robot") and "(" in stripped and stripped.endswith(")"):
+                lines.append(stripped)
         return "\n".join(lines)
 
 
-# Adım 3 (RAG) + Adım 4 (LLM Planner) Entegrasyon Testi
+# Dosya doğrudan çalıştırıldığında ufak bir test yapar
 if __name__ == "__main__":
     print("1. RAG Hafızası (ChromaDB) bağlanıyor...")
     db = VectorDatabaseClient(persist_directory=str(PROJECT_ROOT / "chroma_db"))
@@ -158,9 +169,11 @@ if __name__ == "__main__":
     print("2. Göreve uygun PDDL kuralları RAG'dan çekiliyor...")
     rag_context = context_builder.build_context(task_instruction=task, current_state=state, n_results=3)
 
-    print("3. LLM Planlayıcı başlatılıyor ve Pythonic DSL üretiliyor...\n")
+    print("3. Yerel Ollama Mistral LLM başlatılıyor ve plan üretiliyor...\n")
     agent = LLMAgent()
-    dsl_plan = agent.generate_plan(task_instruction=task, rag_context=rag_context)
-
-    print("=== ÜRETİLEN PYTHONIC DSL PLANI ===")
-    print(dsl_plan)
+    try:
+        dsl_plan = agent.generate_plan(task_instruction=task, rag_context=rag_context)
+        print("=== ÜRETİLEN PYTHONIC DSL PLANI (OLLAMA MISTRAL) ===")
+        print(dsl_plan)
+    except Exception as e:
+        print(f"HATA: {e}")

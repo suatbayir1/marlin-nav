@@ -28,13 +28,12 @@ class HybridPlanningOrchestrator:
     uçtan uca PEFA (Proposal-Execution-Feedback-Adjustment) kontrolcüsü.
     """
 
-    def __init__(self, dry_run: bool = True, scene: str = "FloorPlan1", agent_count: int = 2):
+    def __init__(self, dry_run: bool = True, scene: str = "FloorPlan1", agent_count: int = 2, provider: Optional[str] = None, model_name: Optional[str] = None):
         self.logger = get_logger("Orchestrator")
         self.dry_run = dry_run
         self.scene = scene
         self.agent_count = agent_count
 
-        # 1. RAG Hafıza Katmanı
         self.db_client = VectorDatabaseClient(persist_directory="./chroma_db")
         self.context_builder = ContextBuilder(db_client=self.db_client)
         self.state_tracker = StateTracker(db_client=self.db_client)
@@ -43,27 +42,29 @@ class HybridPlanningOrchestrator:
             self.logger.info("ChromaDB boş bulundu, Wiki (.md) bilgileri yükleniyor...")
             self.context_builder.ingest_wiki_knowledge()
 
-        # 2. Merkezi LLM Planlayıcı Katmanı
+        # LLM Ajanını başlat (CLI parametresi varsa config'i ezer)
+        self.logger.info(f"Yerel LLM bağlantısı kuruluyor... (Sağlayıcı: {provider or 'Config Varsayılanı'})")
         self.llm_agent = LLMAgent()
+        if provider:
+            self.llm_agent.provider = provider
+        if model_name:
+            self.llm_agent.model_name = model_name
+
         self.dsl_generator = DSLGenerator(llm_agent=self.llm_agent, context_builder=self.context_builder)
 
-        # 3. Sembolik PDDL Doğrulayıcı Katmanı
         self.domain_manager = DomainManager()
         self.domain_path = self.domain_manager.save_domain_file()
         self.dsl_parser = DSLToPDDLParser(domain_manager=self.domain_manager)
         self.validator = FastDownwardValidator()
 
-        # 4. Heterojen Görev Dağıtıcı & Dynamic Feedback Katmanı
         self.task_allocator = TaskAllocator()
         self.feedback_handler = DynamicFeedbackHandler(state_tracker=self.state_tracker, max_retries=3)
 
-        # 5. AI2-THOR Yürütme & Metrik Katmanı
         self.env: Optional[ThorEnvironment] = None
         self.runner: Optional[ActionRunner] = None
         self.metrics = MetricsEvaluator()
 
     def build_sample_kitchen_world(self) -> WorldState:
-        """Test senaryosu için başlangıç sembolik dünya durumunu oluşturur."""
         world = WorldState(
             agents={"Robot1", "Robot2"},
             locations={"kitchen", "countertop", "fridge"},
@@ -79,15 +80,10 @@ class HybridPlanningOrchestrator:
         return world
 
     def run_episode(self, episode_id: str, task_instruction: str, world_state: WorldState) -> bool:
-        """
-        Tek bir görevi Proposal -> Symbolic Validation -> Execution -> Feedback
-        döngüsü içinde uçtan uca yürütür.
-        """
         self.logger.info("=" * 65)
         self.logger.info(f"EPISODE BAŞLADI [{episode_id}] | Görev: '{task_instruction}'")
         self.feedback_handler.reset()
 
-        # Başlangıç durumunu RAG hafızasına yaz
         state_summary = self.state_tracker.record_world_state(world_state, note="Initial State")
         current_feedback: Optional[str] = None
         valid_on_first_try = False
@@ -104,8 +100,8 @@ class HybridPlanningOrchestrator:
             for attempt in range(1, self.feedback_handler.max_retries + 1):
                 self.logger.info(f"--- PEFA Döngüsü Deneme {attempt}/{self.feedback_handler.max_retries} ---")
 
-                # ADIM A: Proposal (RAG + LLM ile Pythonic DSL Üretimi)
                 try:
+                    self.logger.info(f"Ollama {self.llm_agent.model_name} üzerinden DSL üretiliyor. Lütfen bekleyin...")
                     dsl_steps = self.dsl_generator.generate_structured_plan(
                         task_instruction=task_instruction,
                         current_state=state_summary,
@@ -116,12 +112,14 @@ class HybridPlanningOrchestrator:
                     packet = self.feedback_handler.handle_syntax_error(str(syn_err))
                     current_feedback = packet.llm_adjustment_prompt
                     continue
+                except Exception as e:
+                    self.logger.error(f"LLM API Hatası: {e}")
+                    return False
 
                 self.logger.info(f"LLM {len(dsl_steps)} adımlı Pythonic DSL üretti:")
                 for s in dsl_steps:
                     self.logger.info(f"   -> {s.raw_line}")
 
-                # ADIM B: Symbolic Translation & PDDL Precondition Verification
                 try:
                     grounded_actions, problem_path = self.dsl_parser.translate_plan(
                         dsl_steps=dsl_steps,
@@ -148,7 +146,6 @@ class HybridPlanningOrchestrator:
                     current_feedback = packet.llm_adjustment_prompt
                     continue
 
-                # ADIM C: Heterojen Robot Yetenek Kontrolü
                 cap_ok, cap_msg, cap_pred = self.task_allocator.verify_team_capabilities(grounded_actions)
                 if not cap_ok:
                     self.logger.warning(f"Yetenek Uyuşmazlığı: {cap_msg}")
@@ -163,7 +160,6 @@ class HybridPlanningOrchestrator:
                 last_ru = self.task_allocator.compute_robot_utilization(grounded_actions)
                 executed_step_count = len(grounded_actions)
 
-                # ADIM D: Execution (AI2-THOR veya Dry-Run Simülasyon Yürütmesi)
                 if self.dry_run:
                     self.logger.info("[DRY-RUN EXECUTION] Doğrulanmış adımlar simüle ediliyor...")
                     for act in grounded_actions:
@@ -194,7 +190,6 @@ class HybridPlanningOrchestrator:
                     episode_success = True
                     break
 
-            # ADIM E: Kantitatif Metriklerin Kaydı (SR, SPL, RU)
             record = self.metrics.log_episode(
                 episode_id=episode_id,
                 task_instruction=task_instruction,
@@ -224,6 +219,19 @@ def main():
         help="Belirtilirse AI2-THOR Unity 3D penceresini başlatır (varsayılan: dry-run)."
     )
     parser.add_argument(
+        "--provider",
+        type=str,
+        default=None,
+        choices=["mock", "ollama", "openai"],
+        help="LLM sağlayıcısını zorla değiştirir (örn: ollama)"
+    )
+    parser.add_argument(
+        "--model",
+        type=str,
+        default=None,
+        help="LLM modelini zorla değiştirir (örn: mistral, llama3)"
+    )
+    parser.add_argument(
         "--task",
         type=str,
         default="Pick up the apple from the countertop and put it inside the fridge.",
@@ -231,7 +239,11 @@ def main():
     )
     args = parser.parse_args()
 
-    orchestrator = HybridPlanningOrchestrator(dry_run=not args.live)
+    orchestrator = HybridPlanningOrchestrator(
+        dry_run=not args.live,
+        provider=args.provider,
+        model_name=args.model
+    )
     initial_world = orchestrator.build_sample_kitchen_world()
     orchestrator.run_episode(
         episode_id="ep_001",

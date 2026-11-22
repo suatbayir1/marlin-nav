@@ -1,0 +1,92 @@
+2026-11-22 15:01:22 | INFO    | Orchestrator | =================================================================
+2026-11-22 15:01:22 | INFO    | Orchestrator | EPISODE BAŞLADI [ep_001] | Görev: 'Pick up the apple from the countertop and put it inside the fridge.'
+2026-11-22 15:01:22 | INFO    | Orchestrator | --- PEFA Döngüsü Deneme 1/3 ---
+2026-11-22 15:01:23 | INFO    | Orchestrator | LLM 4 adımlı Pythonic DSL üretti:
+2026-11-22 15:01:23 | INFO    | Orchestrator |    -> Robot1.navigate("countertop")
+2026-11-22 15:01:23 | INFO    | Orchestrator |    -> Robot1.pickup("apple")
+2026-11-22 15:01:23 | INFO    | Orchestrator |    -> Robot1.navigate("fridge")
+2026-11-22 15:01:23 | INFO    | Orchestrator |    -> Robot1.put("fridge")
+2026-11-22 15:01:23 | WARNING | Orchestrator | PDDL Doğrulama Reddetti: Adım 4 PDDL Doğrulama Hatası [(put Robot1 apple fridge)]: 'fridge' kapalı (closed) durumda! İçine 'apple' koymadan önce açılmalıdır.
+2026-11-22 15:01:23 | INFO    | Orchestrator | --- PEFA Döngüsü Deneme 2/3 ---
+2026-11-22 15:01:23 | INFO    | Orchestrator | LLM 6 adımlı Pythonic DSL üretti:
+2026-11-22 15:01:23 | INFO    | Orchestrator |    -> Robot1.navigate("countertop")
+2026-11-22 15:01:23 | INFO    | Orchestrator |    -> Robot1.pickup("apple")
+2026-11-22 15:01:23 | INFO    | Orchestrator |    -> Robot1.navigate("fridge")
+2026-11-22 15:01:23 | INFO    | Orchestrator |    -> Robot1.open("fridge")
+2026-11-22 15:01:23 | INFO    | Orchestrator |    -> Robot1.put("fridge")
+2026-11-22 15:01:23 | INFO    | Orchestrator |    -> Robot1.close("fridge")
+2026-11-22 15:01:23 | INFO    | Orchestrator | PDDL & Yetenek Doğrulaması BAŞARILI: Plan sembolik olarak GEÇERLİ (6 adım doğrulandı).
+2026-11-22 15:01:23 | INFO    | Orchestrator | [DRY-RUN EXECUTION] Doğrulanmış adımlar simüle ediliyor...
+2026-11-22 15:01:23 | INFO    | Orchestrator |    [EXEC] (navigate Robot1 kitchen countertop)
+2026-11-22 15:01:23 | INFO    | Orchestrator |    [EXEC] (pickup Robot1 apple countertop)
+2026-11-22 15:01:23 | INFO    | Orchestrator |    [EXEC] (navigate Robot1 countertop fridge)
+2026-11-22 15:01:23 | INFO    | Orchestrator |    [EXEC] (open Robot1 fridge)
+2026-11-22 15:01:23 | INFO    | Orchestrator |    [EXEC] (put Robot1 apple fridge)
+2026-11-22 15:01:23 | INFO    | Orchestrator |    [EXEC] (close Robot1 fridge)
+2026-11-22 15:01:23 | INFO    | Orchestrator | EPISODE TAMAMLANDI | Başarı (SR): True | SPL: 1.0 | RU: {'active_agent_ratio': 0.5, 'Robot1_share': 1.0, 'Robot2_share': 0.0}
+2026-11-22 15:01:23 | INFO    | Orchestrator | Deney raporu kaydedildi: logs/experiment_results.json
+2026-11-22 15:03:38 | INFO    | Orchestrator | =================================================================
+2026-11-22 15:03:38 | INFO    | Orchestrator | EPISODE BAŞLADI [ep_001] | Görev: 'Pick up the apple from the countertop and put it inside the fridge.'
+2026-11-22 15:03:42 | INFO    | Orchestrator | --- PEFA Döngüsü Deneme 1/3 ---
+2026-11-22 15:03:42 | INFO    | Orchestrator | LLM 4 adımlı Pythonic DSL üretti:
+2026-11-22 15:03:42 | INFO    | Orchestrator |    -> Robot1.navigate("countertop")
+2026-11-22 15:03:42 | INFO    | Orchestrator |    -> Robot1.pickup("apple")
+2026-11-22 15:03:42 | INFO    | Orchestrator |    -> Robot1.navigate("fridge")
+2026-11-22 15:03:42 | INFO    | Orchestrator |    -> Robot1.put("fridge")
+2026-11-22 15:03:42 | WARNING | Orchestrator | PDDL Doğrulama Reddetti: Adım 4 PDDL Doğrulama Hatası [(put Robot1 apple fridge)]: 'fridge' kapalı (closed) durumda! İçine 'apple' koymadan önce açılmalıdır.
+2026-11-22 15:03:42 | INFO    | Orchestrator | --- PEFA Döngüsü Deneme 2/3 ---
+2026-11-22 15:03:43 | INFO    | Orchestrator | LLM 6 adımlı Pythonic DSL üretti:
+2026-11-22 15:03:43 | INFO    | Orchestrator |    -> Robot1.navigate("countertop")
+2026-11-22 15:03:43 | INFO    | Orchestrator |    -> Robot1.pickup("apple")
+2026-11-22 15:03:43 | INFO    | Orchestrator |    -> Robot1.navigate("fridge")
+2026-11-22 15:03:43 | INFO    | Orchestrator |    -> Robot1.open("fridge")
+2026-11-22 15:03:43 | INFO    | Orchestrator |    -> Robot1.put("fridge")
+2026-11-22 15:03:43 | INFO    | Orchestrator |    -> Robot1.close("fridge")
+2026-11-22 15:03:43 | INFO    | Orchestrator | PDDL & Yetenek Doğrulaması BAŞARILI: Plan sembolik olarak GEÇERLİ (6 adım doğrulandı).
+2026-11-22 15:03:43 | INFO    | Orchestrator | [LIVE AI2-THOR EXECUTION] Komutlar 3D simülasyona gönderiliyor...
+2026-11-22 15:03:43 | WARNING | Orchestrator | AI2-THOR Yürütme Hatası: Execution Failed at Step 2: [(pickup Robot1 apple countertop)]. Simulation Engine Error: NullReferenceException: Target object not found within the specified visibility.. trace:   at UnityStandardAssets.Characters.FirstPerson.BaseFPSAgentController.getInteractableSimObjectFromId (System.String objectId, System.Boolean forceAction) [0x0007a] in <d0c299c29b834681bf516050041bb000>:0 
+  at UnityStandardAssets.Characters.FirstPerson.PhysicsRemoteFPSAgentController.PickupObject (System.String objectId, System.Boolean forceAction, System.Boolean manualInteract) [0x00000] in <d0c299c29b834681bf516050041bb000>:0 
+  at (wrapper managed-to-native) System.Reflection.MonoMethod.InternalInvoke(System.Reflection.MonoMethod,object,object[],System.Exception&)
+  at System.Reflection.MonoMethod.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x00032] in <695d1cc93cca45069c528c15c9fdd749>:0 
+2026-11-22 15:03:43 | INFO    | Orchestrator | --- PEFA Döngüsü Deneme 3/3 ---
+2026-11-22 15:03:43 | INFO    | Orchestrator | LLM 4 adımlı Pythonic DSL üretti:
+2026-11-22 15:03:43 | INFO    | Orchestrator |    -> Robot1.navigate("countertop")
+2026-11-22 15:03:43 | INFO    | Orchestrator |    -> Robot1.pickup("apple")
+2026-11-22 15:03:43 | INFO    | Orchestrator |    -> Robot1.navigate("fridge")
+2026-11-22 15:03:43 | INFO    | Orchestrator |    -> Robot1.put("fridge")
+2026-11-22 15:03:43 | WARNING | Orchestrator | PDDL Doğrulama Reddetti: Adım 4 PDDL Doğrulama Hatası [(put Robot1 apple fridge)]: 'fridge' kapalı (closed) durumda! İçine 'apple' koymadan önce açılmalıdır.
+2026-11-22 15:03:43 | INFO    | Orchestrator | EPISODE TAMAMLANDI | Başarı (SR): False | SPL: 0.0 | RU: {'active_agent_ratio': 0.5, 'Robot1_share': 1.0, 'Robot2_share': 0.0}
+2026-11-22 15:03:43 | INFO    | Orchestrator | Deney raporu kaydedildi: logs/experiment_results.json
+2026-11-22 15:04:00 | INFO    | Orchestrator | ChromaDB boş bulundu, Wiki (.md) bilgileri yükleniyor...
+2026-11-22 15:04:03 | INFO    | Orchestrator | =================================================================
+2026-11-22 15:04:03 | INFO    | Orchestrator | EPISODE BAŞLADI [ep_001] | Görev: 'Pick up the apple from the countertop and put it inside the fridge.'
+2026-11-22 15:04:07 | INFO    | Orchestrator | --- PEFA Döngüsü Deneme 1/3 ---
+2026-11-22 15:04:07 | INFO    | Orchestrator | LLM 4 adımlı Pythonic DSL üretti:
+2026-11-22 15:04:07 | INFO    | Orchestrator |    -> Robot1.navigate("countertop")
+2026-11-22 15:04:07 | INFO    | Orchestrator |    -> Robot1.pickup("apple")
+2026-11-22 15:04:07 | INFO    | Orchestrator |    -> Robot1.navigate("fridge")
+2026-11-22 15:04:07 | INFO    | Orchestrator |    -> Robot1.put("fridge")
+2026-11-22 15:04:07 | WARNING | Orchestrator | PDDL Doğrulama Reddetti: Adım 4 PDDL Doğrulama Hatası [(put Robot1 apple fridge)]: 'fridge' kapalı (closed) durumda! İçine 'apple' koymadan önce açılmalıdır.
+2026-11-22 15:04:07 | INFO    | Orchestrator | --- PEFA Döngüsü Deneme 2/3 ---
+2026-11-22 15:04:07 | INFO    | Orchestrator | LLM 6 adımlı Pythonic DSL üretti:
+2026-11-22 15:04:07 | INFO    | Orchestrator |    -> Robot1.navigate("countertop")
+2026-11-22 15:04:07 | INFO    | Orchestrator |    -> Robot1.pickup("apple")
+2026-11-22 15:04:07 | INFO    | Orchestrator |    -> Robot1.navigate("fridge")
+2026-11-22 15:04:07 | INFO    | Orchestrator |    -> Robot1.open("fridge")
+2026-11-22 15:04:07 | INFO    | Orchestrator |    -> Robot1.put("fridge")
+2026-11-22 15:04:07 | INFO    | Orchestrator |    -> Robot1.close("fridge")
+2026-11-22 15:04:07 | INFO    | Orchestrator | PDDL & Yetenek Doğrulaması BAŞARILI: Plan sembolik olarak GEÇERLİ (6 adım doğrulandı).
+2026-11-22 15:04:07 | INFO    | Orchestrator | [LIVE AI2-THOR EXECUTION] Komutlar 3D simülasyona gönderiliyor...
+2026-11-22 15:04:07 | WARNING | Orchestrator | AI2-THOR Yürütme Hatası: Execution Failed at Step 2: [(pickup Robot1 apple countertop)]. Simulation Engine Error: NullReferenceException: Target object not found within the specified visibility.. trace:   at UnityStandardAssets.Characters.FirstPerson.BaseFPSAgentController.getInteractableSimObjectFromId (System.String objectId, System.Boolean forceAction) [0x0007a] in <d0c299c29b834681bf516050041bb000>:0 
+  at UnityStandardAssets.Characters.FirstPerson.PhysicsRemoteFPSAgentController.PickupObject (System.String objectId, System.Boolean forceAction, System.Boolean manualInteract) [0x00000] in <d0c299c29b834681bf516050041bb000>:0 
+  at (wrapper managed-to-native) System.Reflection.MonoMethod.InternalInvoke(System.Reflection.MonoMethod,object,object[],System.Exception&)
+  at System.Reflection.MonoMethod.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x00032] in <695d1cc93cca45069c528c15c9fdd749>:0 
+2026-11-22 15:04:07 | INFO    | Orchestrator | --- PEFA Döngüsü Deneme 3/3 ---
+2026-11-22 15:04:08 | INFO    | Orchestrator | LLM 4 adımlı Pythonic DSL üretti:
+2026-11-22 15:04:08 | INFO    | Orchestrator |    -> Robot1.navigate("countertop")
+2026-11-22 15:04:08 | INFO    | Orchestrator |    -> Robot1.pickup("apple")
+2026-11-22 15:04:08 | INFO    | Orchestrator |    -> Robot1.navigate("fridge")
+2026-11-22 15:04:08 | INFO    | Orchestrator |    -> Robot1.put("fridge")
+2026-11-22 15:04:08 | WARNING | Orchestrator | PDDL Doğrulama Reddetti: Adım 4 PDDL Doğrulama Hatası [(put Robot1 apple fridge)]: 'fridge' kapalı (closed) durumda! İçine 'apple' koymadan önce açılmalıdır.
+2026-11-22 15:04:08 | INFO    | Orchestrator | EPISODE TAMAMLANDI | Başarı (SR): False | SPL: 0.0 | RU: {'active_agent_ratio': 0.5, 'Robot1_share': 1.0, 'Robot2_share': 0.0}
+2026-11-22 15:04:08 | INFO    | Orchestrator | Deney raporu kaydedildi: logs/experiment_results.json
